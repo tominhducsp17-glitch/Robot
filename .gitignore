@@ -1,0 +1,56 @@
+# colcon / CMake / test output
+build/
+install/
+log/
+.cache/
+CMakeFiles/
+CMakeCache.txt
+Testing/
+compile_commands.json
+
+# Python
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.coverage
+htmlcov/
+.venv/
+venv/
+
+# IDE / OS
+.vscode/
+.idea/
+*.swp
+.DS_Store
+/image.png
+
+# ROS bags and databases
+rosbag2_*/
+*.bag
+*.db3
+*.mcap
+
+# Generated experiment output
+experiments/raw/**
+!experiments/raw/.gitkeep
+experiments/summaries/**
+!experiments/summaries/.gitkeep
+metrics/
+reports/generated/
+
+# Large datasets, models, and media
+datasets/
+data/
+models/
+checkpoints/
+videos/
+*.mp4
+*.mov
+*.avi
+*.mkv
+*.onnx
+*.pt
+*.pth
+
+# Gazebo local state
+.gz/
