@@ -1,0 +1,21 @@
+name: phase-0-ci
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  repository-tests:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install build tools
+        run: sudo apt-get update && sudo apt-get install -y cmake ninja-build
+      - name: Python smoke tests
+        run: python3 -m unittest discover -s tests -p 'test_*.py' -v
+      - name: Configure C++ smoke test
+        run: cmake -S . -B build/repository-tests -G Ninja
+      - name: Build C++ smoke test
+        run: cmake --build build/repository-tests
+      - name: Run C++ smoke test
+        run: ctest --test-dir build/repository-tests --output-on-failure
