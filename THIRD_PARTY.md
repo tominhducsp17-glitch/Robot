@@ -18,8 +18,8 @@ respective authors.
 Running, documenting, or wrapping an upstream demo is not claimed as an
 original project contribution. Project-owned Phase 1 work consists of the
 simulation world, wrapper description/configuration, staged task orchestration,
-physical-result validation, and logging. It does not claim ownership of Panda,
-MoveIt, Gazebo, or ROS assets and software.
+physical-result validation, contact-force aggregation/gating, and logging. It
+does not claim ownership of Panda, MoveIt, Gazebo, or ROS assets and software.
 
 Exact installed Debian versions and source links are recorded in
 `docs/version_matrix.md`.

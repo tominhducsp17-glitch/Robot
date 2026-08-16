@@ -15,15 +15,23 @@ simulation-only nominal protocol.
 - One episode is successful only when planning and execution succeed for every
   segment and the final physical peg is upright, on the table, and inside the
   position tolerance (6 mm for Task B; 50 mm wide-area tolerance for Task A).
+- The peg contact sensor is bridged to ROS 2 at `/phase1/peg/contacts`. The
+  evaluator resets before motion and records contact message count, wrench
+  sample count, peak total/axial (world Z)/lateral force, and RMS total force.
+- The nominal force limit is 50 N. An executed episode fails when the sensor
+  topic is unavailable or its measured peak total force exceeds this limit.
 
 Run the five-pose matrix with `scripts/phase1/run_nominal_benchmark.sh`. Each
 episode records planning/execution times, intermediate/final Gazebo poses, and
 the physical outcome. The summary evaluates the 95% success-rate gate from the
 JSON values, not the wrapper process exit code.
 
-## Current limitation
+## Verified nominal result
 
-Contact-force monitoring is not present. Logs therefore record
-`force_monitor_available: false` and `force_violation: null`. The benchmark may
-pass its trajectory-and-physical-outcome gate, but the overall Phase 1 exit gate
-must remain false until contact-force violations can be evaluated.
+The verified five-pose Task B run on 2026-08-16 achieved 5/5 trajectory and
+physical successes, zero force-limit violations, and a maximum peak contact
+force of 12.333 N. The generated summary reported `phase1_exit_gate: true`.
+
+This is evaluator-side simulation ground truth, not a deployable force-feedback
+controller. Compliant control, active force limiting, and retreat behavior
+remain later-phase work.

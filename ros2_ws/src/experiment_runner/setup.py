@@ -22,6 +22,8 @@ setup(
     license="LicenseRef-Proprietary",
     entry_points={
         "console_scripts": [
+            "contact_force_monitor = experiment_runner.contact_force_monitor:main",
+            "force_monitor_client = experiment_runner.force_monitor_client:main",
             "phase1_task = experiment_runner.phase1_task:main",
         ],
     },
