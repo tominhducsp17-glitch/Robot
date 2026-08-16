@@ -1,6 +1,6 @@
 # Phase 1 status
 
-Last runtime verification: 2026-08-15 on Ubuntu 24.04 / WSL2, ROS 2 Jazzy,
+Last runtime verification: 2026-08-16 on Ubuntu 24.04 / WSL2, ROS 2 Jazzy,
 MoveIt 2, MoveIt Task Constructor, and Gazebo Harmonic.
 
 ## Implemented
@@ -15,6 +15,8 @@ MoveIt 2, MoveIt Task Constructor, and Gazebo Harmonic.
 - JSON logging of segment planning/execution and intermediate/final physical
   peg poses.
 - Five valid nominal initial poses and a reproducible benchmark command.
+- Gazebo peg contact sensor, ROS bridge, independent force evaluator, and
+  per-episode peak/RMS force logging with a configurable 50 N nominal limit.
 
 ## Verified evidence
 
@@ -26,17 +28,18 @@ MoveIt 2, MoveIt Task Constructor, and Gazebo Harmonic.
   planar insertion error of approximately 0.187 mm in the center run.
 - The center and four +/-20 mm initial-pose cases have each completed
   successfully after adding retry handling for transient Gazebo pose queries.
+- The final five-pose verification achieved 5/5 overall successes, zero
+  force-limit violations, and a maximum peak contact force of 12.333 N.
 
 Generated run logs are intentionally ignored by Git; rerun
 `scripts/phase1/run_nominal_benchmark.sh` to produce a local evidence summary.
 
 ## Gate status
 
-The trajectory-and-physical-result portion meets the nominal target in the
-verified five-pose run. The full Phase 1 exit criterion is **not yet passed**:
-the current world has no contact-force sensor or force-limit monitor, so the
-"no contact-force violation" condition cannot be evaluated. Phase 2 has not
-started.
+The full Phase 1 exit criterion is **passed** in the verified five-pose nominal
+run: trajectory-and-physical success was 5/5 (100%), the contact monitor was
+available in every episode, and no episode exceeded the 50 N evaluator limit.
+Phase 2 has not started.
 
 ## Known runtime issue
 
@@ -48,5 +51,6 @@ or recorded outcome. It remains an integration issue to investigate rather
 than a clean-shutdown claim.
 
 This is a simulation-only geometric baseline. It uses exact configured poses,
-is not a deployable controller, and is not evidence of perception, visual
+and its force check is evaluator-side instrumentation rather than active force
+control. It is not a deployable controller or evidence of perception, visual
 servo, compliance, recovery, or overall CV readiness.

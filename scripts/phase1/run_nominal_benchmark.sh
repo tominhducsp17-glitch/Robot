@@ -64,8 +64,14 @@ import sys
 
 runs = [json.loads(Path(name).read_text(encoding="utf-8")) for name in sys.argv[1:]]
 successes = sum(bool(run["success"]) for run in runs)
+task_successes = sum(bool(run["task_success"]) for run in runs)
 rate = successes / len(runs) if runs else 0.0
+task_rate = task_successes / len(runs) if runs else 0.0
 force_available = bool(runs) and all(run["force_monitor_available"] for run in runs)
+force_violations = sum(run["force_violation"] is True for run in runs)
+force_gate = force_available and force_violations == 0
+success_rate_gate = task_rate >= 0.95 and len(runs) == 5
+phase1_exit_gate = success_rate_gate and force_gate
 report = {
     "schema_version": 1,
     "phase": 1,
@@ -74,12 +80,23 @@ report = {
     "requested_trials": 5,
     "recorded_trials": len(runs),
     "successful_trials": successes,
-    "trajectory_and_physical_success_rate": rate,
-    "success_rate_gate": rate >= 0.95 and len(runs) == 5,
+    "trajectory_and_physical_successful_trials": task_successes,
+    "trajectory_and_physical_success_rate": task_rate,
+    "overall_success_rate": rate,
+    "success_rate_gate": success_rate_gate,
     "force_monitor_available": force_available,
-    "force_gate": None,
-    "phase1_exit_gate": False,
-    "phase1_exit_gate_blocker": "contact-force monitoring is not implemented",
+    "force_violation_trials": force_violations,
+    "peak_contact_force_n": max(
+        (run["contact_force"]["peak_force_n"] or 0.0 for run in runs),
+        default=0.0,
+    ),
+    "force_gate": force_gate,
+    "phase1_exit_gate": phase1_exit_gate,
+    "phase1_exit_gate_blocker": (
+        None
+        if phase1_exit_gate
+        else "nominal success-rate or contact-force gate failed"
+    ),
     "run_logs": sys.argv[1:],
 }
 output_dir = Path("experiments/summaries/phase1")
@@ -89,7 +106,8 @@ output = output_dir / f"nominal_task_b_{stamp}.json"
 output.write_text(json.dumps(report, indent=2) + "\n", encoding="utf-8")
 print(f"PHASE1_BENCHMARK={output}")
 print(f"SUCCESS_RATE={successes}/{len(runs)} ({rate:.1%})")
-print("FORCE_GATE=NOT_EVALUATED")
+print(f"FORCE_GATE={'PASS' if force_gate else 'FAIL'}")
+print(f"PHASE1_EXIT_GATE={'PASS' if phase1_exit_gate else 'FAIL'}")
 PY
 
 exit "${failures}"

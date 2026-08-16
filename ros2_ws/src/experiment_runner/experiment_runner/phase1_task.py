@@ -364,6 +364,44 @@ def git_commit():
         return "unknown"
 
 
+def force_monitor(action):
+    """Reset or read the independent ROS contact monitor."""
+    try:
+        result = subprocess.run(
+            ["ros2", "run", "experiment_runner", "force_monitor_client", action],
+            check=True,
+            capture_output=True,
+            text=True,
+            timeout=10,
+        )
+        marker = "PHASE1_FORCE="
+        line = next(
+            output_line
+            for output_line in reversed(result.stdout.splitlines())
+            if marker in output_line
+        )
+        return json.loads(line.split(marker, 1)[1])
+    except (
+        subprocess.CalledProcessError,
+        subprocess.TimeoutExpired,
+        StopIteration,
+        json.JSONDecodeError,
+    ) as error:
+        return {
+            "available": False,
+            "topic": "/phase1/peg/contacts",
+            "force_limit_n": None,
+            "contact_message_count": 0,
+            "wrench_sample_count": 0,
+            "peak_force_n": None,
+            "peak_axial_force_n": None,
+            "peak_lateral_force_n": None,
+            "rms_force_n": None,
+            "force_violation": None,
+            "error": str(error),
+        }
+
+
 def run_segment(task, max_solutions, execute):
     started = time.monotonic()
     planned = bool(task.plan(max_solutions))
@@ -445,7 +483,16 @@ def evaluate_physical_outcome(task_name, pose):
     }
 
 
-def write_log(args, segments, success, started_at, physical_states, physical_outcome):
+def write_log(
+    args,
+    segments,
+    success,
+    task_success,
+    started_at,
+    physical_states,
+    physical_outcome,
+    force_metrics,
+):
     args.log_dir.mkdir(parents=True, exist_ok=True)
     stamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%S.%fZ")
     path = args.log_dir / f"{args.task}_{stamp}.json"
@@ -460,6 +507,7 @@ def write_log(args, segments, success, started_at, physical_states, physical_out
         "started_at": started_at,
         "finished_at": datetime.now(timezone.utc).isoformat(),
         "success": success,
+        "task_success": task_success,
         "plan_only": args.plan_only,
         "ground_truth": {
             "peg_pose": {"x": args.peg_x, "y": args.peg_y, "z": 0.812},
@@ -474,8 +522,9 @@ def write_log(args, segments, success, started_at, physical_states, physical_out
         "segments": segments,
         "gazebo_peg_poses": physical_states,
         "physical_outcome": physical_outcome,
-        "force_monitor_available": False,
-        "force_violation": None,
+        "force_monitor_available": force_metrics["available"],
+        "force_violation": force_metrics["force_violation"],
+        "contact_force": force_metrics,
     }
     path.write_text(json.dumps(payload, indent=2) + "\n", encoding="utf-8")
     print(f"PHASE1_LOG={path}")
@@ -486,8 +535,11 @@ def main():
     started_at = datetime.now(timezone.utc).isoformat()
     segments = []
     success = False
+    task_success = False
     physical_states = {}
     physical_outcome = None
+    force_metrics = None
+    force_reset_succeeded = False
 
     rclcpp.init()
     options = rclcpp.NodeOptions()
@@ -501,50 +553,70 @@ def main():
         reset_gazebo_peg(args.peg_x, args.peg_y)
         time.sleep(0.25)
         physical_states["after_reset"] = gazebo_peg_pose()
+        reset_metrics = force_monitor("reset")
+        force_reset_succeeded = "error" not in reset_metrics
 
         grasp, planners = build_grasp_task(node, args.peg_x, args.peg_y)
         keep_alive.extend(planners)
         ok, result = run_segment(grasp, args.max_solutions, not args.plan_only)
         segments.append(result)
-        if not ok or args.plan_only:
-            success = ok and args.plan_only
-            return 0 if success else 1
+        if args.plan_only:
+            task_success = ok
+        elif ok:
+            gz_topic("/phase1/peg/attach")
+            time.sleep(0.25)
+            physical_states["after_attach"] = gazebo_peg_pose()
+            transfer, planners = build_transfer_task(node, args.task)
+            keep_alive.extend(planners)
+            ok, result = run_segment(transfer, args.max_solutions, True)
+            segments.append(result)
 
-        gz_topic("/phase1/peg/attach")
-        time.sleep(0.25)
-        physical_states["after_attach"] = gazebo_peg_pose()
-        transfer, planners = build_transfer_task(node, args.task)
-        keep_alive.extend(planners)
-        ok, result = run_segment(transfer, args.max_solutions, True)
-        segments.append(result)
-        if not ok:
-            return 1
-
-        time.sleep(0.25)
-        physical_states["before_detach"] = gazebo_peg_pose()
-        gz_topic("/phase1/peg/detach")
-        time.sleep(0.50)
-        physical_states["after_detach"] = gazebo_peg_pose()
-        retreat, planners = build_retreat_task(node)
-        keep_alive.extend(planners)
-        ok, result = run_segment(retreat, args.max_solutions, True)
-        segments.append(result)
-        time.sleep(0.50)
-        physical_states["final"] = gazebo_peg_pose()
-        physical_outcome = evaluate_physical_outcome(args.task, physical_states["final"])
-        success = ok and physical_outcome["success"]
-        return 0 if success else 1
+            if ok:
+                time.sleep(0.25)
+                physical_states["before_detach"] = gazebo_peg_pose()
+                gz_topic("/phase1/peg/detach")
+                time.sleep(0.50)
+                physical_states["after_detach"] = gazebo_peg_pose()
+                retreat, planners = build_retreat_task(node)
+                keep_alive.extend(planners)
+                ok, result = run_segment(retreat, args.max_solutions, True)
+                segments.append(result)
+                time.sleep(0.50)
+                physical_states["final"] = gazebo_peg_pose()
+                physical_outcome = evaluate_physical_outcome(
+                    args.task, physical_states["final"]
+                )
+                task_success = ok and physical_outcome["success"]
     finally:
+        force_metrics = force_monitor("snapshot")
+        force_metrics["reset_succeeded"] = force_reset_succeeded
+        force_metrics["available"] = (
+            force_metrics["available"] and force_reset_succeeded
+        )
+        if not force_metrics["available"]:
+            force_metrics["force_violation"] = None
+        if args.plan_only:
+            force_metrics["force_violation"] = None
+            success = task_success
+        else:
+            success = (
+                task_success
+                and force_metrics["available"]
+                and force_metrics["force_violation"] is False
+            )
         write_log(
             args,
             segments,
             success,
+            task_success,
             started_at,
             physical_states,
             physical_outcome,
+            force_metrics,
         )
         del keep_alive
         rclcpp.shutdown()
+    return 0 if success else 1
 
 
 if __name__ == "__main__":

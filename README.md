@@ -7,10 +7,11 @@ bounded failure recovery.
 
 ## Current status
 
-**Phase 0 is complete and Phase 1 is in progress.** The repository now contains
+**Phases 0 and 1 are complete; Phase 2 has not started.** The repository contains
 a simulation-only, ground-truth geometric baseline for Task A pick-and-place
-and Task B large-clearance insertion. Perception, visual servoing, compliant
-control, force-limit monitoring, and recovery are not implemented yet.
+and Task B large-clearance insertion, including Gazebo contact-force monitoring
+and a reproducible nominal exit gate. Perception, visual servoing, compliant
+control, and recovery are not implemented yet.
 
 See:
 
@@ -105,6 +106,9 @@ source install/setup.bash
 ros2 launch manipulation_bringup phase1.launch.py
 ```
 
+The bringup defaults to a 50 N evaluator limit. Override it only when running a
+documented experiment, for example `force_limit_n:=40.0`.
+
 Run a task in terminal 2:
 
 ```bash
@@ -128,9 +132,11 @@ by Git.
 
 - The Phase 1 runner intentionally uses configured simulator ground truth and
   marks every log `simulation_only: true` and `deployable_controller: false`.
+- The Gazebo contact monitor is evaluator instrumentation. It records peak/RMS
+  force and rejects violations; it is not a compliant or safety controller.
 - No learned-perception/CUDA dependency is required for the MVP.
-- Phase 2 must not start until the remaining Phase 1 force-monitoring gate is
-  resolved or the project plan is explicitly revised.
+- Phase 2 may now replace configured peg/fixture poses with timestamped camera
+  estimates while Gazebo ground truth remains evaluator-only.
 - Simulation-only results must always be described as simulation-only.
 
 ## License

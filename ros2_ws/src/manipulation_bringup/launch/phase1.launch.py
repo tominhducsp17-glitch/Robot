@@ -8,6 +8,7 @@ from launch.event_handlers import OnProcessExit
 from launch.launch_description_sources import PythonLaunchDescriptionSource
 from launch.substitutions import Command, FindExecutable, LaunchConfiguration, PathJoinSubstitution
 from launch_ros.actions import Node
+from launch_ros.parameter_descriptions import ParameterValue
 from launch_ros.substitutions import FindPackageShare
 from moveit_configs_utils import MoveItConfigsBuilder
 
@@ -16,6 +17,7 @@ def generate_launch_description():
     use_sim_time = LaunchConfiguration("use_sim_time")
     rviz_enabled = LaunchConfiguration("rviz")
     headless = LaunchConfiguration("headless")
+    force_limit_n = LaunchConfiguration("force_limit_n")
 
     description_file = PathJoinSubstitution(
         [FindPackageShare("manipulation_description"), "urdf", "panda_phase1.urdf.xacro"]
@@ -103,10 +105,23 @@ def generate_launch_description():
         output="screen",
         arguments=[
             "/clock@rosgraph_msgs/msg/Clock[gz.msgs.Clock",
+            "/phase1/peg/contacts@ros_gz_interfaces/msg/Contacts[gz.msgs.Contacts",
             "/phase1/camera/image@sensor_msgs/msg/Image@gz.msgs.Image",
             "/phase1/camera/camera_info@sensor_msgs/msg/CameraInfo@gz.msgs.CameraInfo",
             "/phase1/camera/depth_image@sensor_msgs/msg/Image@gz.msgs.Image",
             "/phase1/camera/points@sensor_msgs/msg/PointCloud2@gz.msgs.PointCloudPacked",
+        ],
+    )
+
+    contact_force_monitor = Node(
+        package="experiment_runner",
+        executable="contact_force_monitor",
+        output="screen",
+        parameters=[
+            {
+                "contact_topic": "/phase1/peg/contacts",
+                "force_limit_n": ParameterValue(force_limit_n, value_type=float),
+            }
         ],
     )
 
@@ -159,9 +174,11 @@ def generate_launch_description():
             DeclareLaunchArgument("use_sim_time", default_value="true"),
             DeclareLaunchArgument("rviz", default_value="true"),
             DeclareLaunchArgument("headless", default_value="false"),
+            DeclareLaunchArgument("force_limit_n", default_value="50.0"),
             gazebo_gui,
             gazebo_headless,
             bridge,
+            contact_force_monitor,
             state_publisher,
             spawn_panda,
             spawn_controllers,
