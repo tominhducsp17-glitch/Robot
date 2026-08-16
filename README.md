@@ -7,16 +7,17 @@ bounded failure recovery.
 
 ## Current status
 
-Only **Phase 0 (environment and repository readiness)** is in scope. No Task B
-world, visual-servo, compliance, perception, or recovery implementation exists
-yet. A successful upstream Panda demo is an environment smoke test, not a
-project contribution and not evidence that the CV-readiness gate has passed.
+**Phase 0 is complete and Phase 1 is in progress.** The repository now contains
+a simulation-only, ground-truth geometric baseline for Task A pick-and-place
+and Task B large-clearance insertion. Perception, visual servoing, compliant
+control, force-limit monitoring, and recovery are not implemented yet.
 
 See:
 
 - `CLOSED_LOOP_VISION_COMPLIANT_MANIPULATION_PLAN.md` for the complete plan.
 - `docs/environment_audit.md` for machine and gate evidence.
 - `docs/version_matrix.md` for the supported dependency matrix.
+- `docs/phase1_status.md` for Phase 1 evidence and remaining gate.
 - `THIRD_PARTY.md` for the boundary between upstream software and future
   project-owned work.
 
@@ -78,12 +79,58 @@ ctest --test-dir build/repository-tests --output-on-failure
 Generated `build/`, `install/`, `log/`, bags, metrics, datasets, and videos are
 ignored by Git.
 
+## Phase 1 quick start
+
+Install the MoveIt Task Constructor binary dependencies once:
+
+```bash
+./scripts/phase1/install_dependencies.sh
+```
+
+Build the four Phase 1 packages:
+
+```bash
+source /opt/ros/jazzy/setup.bash
+colcon build --base-paths ros2_ws/src \
+  --packages-select manipulation_description manipulation_moveit_config \
+  manipulation_bringup experiment_runner
+source install/setup.bash
+```
+
+Keep the simulator running in terminal 1:
+
+```bash
+source /opt/ros/jazzy/setup.bash
+source install/setup.bash
+ros2 launch manipulation_bringup phase1.launch.py
+```
+
+Run a task in terminal 2:
+
+```bash
+source /opt/ros/jazzy/setup.bash
+source install/setup.bash
+ros2 launch experiment_runner phase1_task.launch.py task:=task_a
+ros2 launch experiment_runner phase1_task.launch.py task:=task_b
+```
+
+For the five-pose Task B matrix, leave terminal 1 running and execute:
+
+```bash
+./scripts/phase1/run_nominal_benchmark.sh
+```
+
+Episode JSON is written below `experiments/raw/phase1/`; benchmark summaries go
+below `experiments/summaries/phase1/`. Both locations are intentionally ignored
+by Git.
+
 ## Scope boundaries
 
-- Simulator ground truth may eventually be used only by evaluators, never by a
-  deployable controller.
+- The Phase 1 runner intentionally uses configured simulator ground truth and
+  marks every log `simulation_only: true` and `deployable_controller: false`.
 - No learned-perception/CUDA dependency is required for the MVP.
-- Phase 1 must not start until every Phase 0 smoke test is evidenced as PASS.
+- Phase 2 must not start until the remaining Phase 1 force-monitoring gate is
+  resolved or the project plan is explicitly revised.
 - Simulation-only results must always be described as simulation-only.
 
 ## License

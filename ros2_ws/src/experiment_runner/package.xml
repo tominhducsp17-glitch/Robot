@@ -1,0 +1,22 @@
+<?xml version="1.0"?>
+<package format="3">
+  <name>experiment_runner</name>
+  <version>0.1.0</version>
+  <description>Ground-truth Phase 1 MTC task runner and structured episode logging.</description>
+  <maintainer email="tominhducsp17@gmail.com">duc</maintainer>
+  <license>LicenseRef-Proprietary</license>
+
+  <buildtool_depend>ament_python</buildtool_depend>
+  <exec_depend>control_msgs</exec_depend>
+  <exec_depend>geometry_msgs</exec_depend>
+  <exec_depend>launch</exec_depend>
+  <exec_depend>launch_ros</exec_depend>
+  <exec_depend>manipulation_moveit_config</exec_depend>
+  <exec_depend>moveit_task_constructor_core</exec_depend>
+  <exec_depend>moveit_task_constructor_msgs</exec_depend>
+  <exec_depend>moveit_msgs</exec_depend>
+  <exec_depend>shape_msgs</exec_depend>
+  <exec_depend>std_msgs</exec_depend>
+
+  <export><build_type>ament_python</build_type></export>
+</package>
