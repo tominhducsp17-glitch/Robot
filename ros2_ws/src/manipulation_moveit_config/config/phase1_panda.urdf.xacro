@@ -1,0 +1,4 @@
+<?xml version="1.0"?>
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro" name="phase1_panda">
+  <xacro:include filename="$(find manipulation_description)/urdf/panda_phase1.urdf.xacro"/>
+</robot>

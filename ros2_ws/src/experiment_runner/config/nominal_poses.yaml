@@ -1,0 +1,8 @@
+schema_version: 1
+task: task_b
+poses:
+  - {id: center, x: 0.38, y: 0.20}
+  - {id: x_plus, x: 0.40, y: 0.20}
+  - {id: x_minus, x: 0.36, y: 0.20}
+  - {id: y_plus, x: 0.38, y: 0.22}
+  - {id: y_minus, x: 0.38, y: 0.18}
