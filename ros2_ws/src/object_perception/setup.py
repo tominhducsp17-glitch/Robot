@@ -2,7 +2,7 @@ from glob import glob
 from setuptools import find_packages, setup
 
 
-package_name = "experiment_runner"
+package_name = "object_perception"
 
 setup(
     name=package_name,
@@ -12,19 +12,17 @@ setup(
         ("share/ament_index/resource_index/packages", ["resource/" + package_name]),
         ("share/" + package_name, ["package.xml"]),
         ("share/" + package_name + "/config", glob("config/*.yaml")),
-        ("share/" + package_name + "/launch", glob("launch/*.launch.py")),
     ],
     install_requires=["setuptools"],
     zip_safe=True,
     maintainer="duc",
     maintainer_email="tominhducsp17@gmail.com",
-    description="Phase 1/2 MTC experiment runner",
+    description="ArUco pose estimation and planning-scene updates",
     license="LicenseRef-Proprietary",
     entry_points={
         "console_scripts": [
-            "contact_force_monitor = experiment_runner.contact_force_monitor:main",
-            "force_monitor_client = experiment_runner.force_monitor_client:main",
-            "phase1_task = experiment_runner.phase1_task:main",
+            "aruco_pose_estimator = object_perception.aruco_pose_estimator:main",
+            "perception_snapshot_client = object_perception.snapshot_client:main",
         ],
     },
 )

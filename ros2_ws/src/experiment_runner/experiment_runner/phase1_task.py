@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
-"""Ground-truth geometric baseline for Phase 1.
+"""Geometric task runner shared by the Phase 1 and Phase 2 gates.
 
-This module intentionally reads configured simulator poses. It is not a
-deployable controller and must be replaced by perception beginning in Phase 2.
+Phase 1 uses configured simulator poses.  Phase 2 freezes a timestamped camera
+snapshot and uses only those estimates for planning; simulator truth remains
+available to the experiment evaluator and is never fed back to the planner.
 """
 
 import argparse
@@ -48,6 +49,12 @@ def parse_args():
     parser.add_argument("--task", choices=("task_a", "task_b"), default="task_b")
     parser.add_argument("--peg-x", type=float, default=0.38)
     parser.add_argument("--peg-y", type=float, default=0.20)
+    parser.add_argument(
+        "--pose-source",
+        choices=("configured", "perception"),
+        default="configured",
+    )
+    parser.add_argument("--perception-timeout", type=float, default=15.0)
     parser.add_argument("--plan-only", action="store_true")
     parser.add_argument("--max-solutions", type=int, default=5)
     parser.add_argument("--log-dir", type=Path, default=Path("experiments/raw/phase1"))
@@ -96,15 +103,15 @@ def cylinder_object(object_id, radius, height, xyz):
     )
 
 
-def add_nominal_scene(stage, peg_x, peg_y):
+def add_nominal_scene(stage, peg_x, peg_y, peg_z, fixture_x, fixture_y, fixture_z):
     stage.addObject(box_object("work_table", TABLE_SIZE, (TABLE_X, 0.0, TABLE_Z)))
-    stage.addObject(cylinder_object(PEG, PEG_RADIUS, PEG_HEIGHT, (peg_x, peg_y, 0.812)))
+    stage.addObject(cylinder_object(PEG, PEG_RADIUS, PEG_HEIGHT, (peg_x, peg_y, peg_z)))
 
     walls = (
-        ("fixture_x_pos", (0.02, 0.09, 0.10), (FIXTURE_X + 0.035, FIXTURE_Y, 0.85)),
-        ("fixture_x_neg", (0.02, 0.09, 0.10), (FIXTURE_X - 0.035, FIXTURE_Y, 0.85)),
-        ("fixture_y_pos", (0.05, 0.02, 0.10), (FIXTURE_X, FIXTURE_Y + 0.035, 0.85)),
-        ("fixture_y_neg", (0.05, 0.02, 0.10), (FIXTURE_X, FIXTURE_Y - 0.035, 0.85)),
+        ("fixture_x_pos", (0.02, 0.09, 0.10), (fixture_x + 0.035, fixture_y, fixture_z + 0.05)),
+        ("fixture_x_neg", (0.02, 0.09, 0.10), (fixture_x - 0.035, fixture_y, fixture_z + 0.05)),
+        ("fixture_y_pos", (0.05, 0.02, 0.10), (fixture_x, fixture_y + 0.035, fixture_z + 0.05)),
+        ("fixture_y_neg", (0.05, 0.02, 0.10), (fixture_x, fixture_y - 0.035, fixture_z + 0.05)),
     )
     for object_id, size, xyz in walls:
         stage.addObject(box_object(object_id, size, xyz))
@@ -157,7 +164,7 @@ def make_task(name, node):
     return task
 
 
-def build_grasp_task(node, peg_x, peg_y):
+def build_grasp_task(node, peg_x, peg_y, peg_z, fixture_x, fixture_y, fixture_z):
     pipeline = core.PipelinePlanner(node, "ompl", "RRTConnectkConfigDefault")
     cartesian = core.CartesianPath()
     cartesian.max_velocity_scaling_factor = 0.10
@@ -179,22 +186,38 @@ def build_grasp_task(node, peg_x, peg_y):
         "fixture_x_neg",
         "fixture_y_pos",
         "fixture_y_neg",
+        "perception_peg",
+        "perception_fixture_x_pos",
+        "perception_fixture_x_neg",
+        "perception_fixture_y_pos",
+        "perception_fixture_y_neg",
     ):
         cleanup.removeObject(object_id)
     task.add(cleanup)
 
-    scene = stages.ModifyPlanningScene("add nominal ground-truth scene")
-    add_nominal_scene(scene, peg_x, peg_y)
+    scene = stages.ModifyPlanningScene("add scene from selected pose source")
+    add_nominal_scene(
+        scene,
+        peg_x,
+        peg_y,
+        peg_z,
+        fixture_x,
+        fixture_y,
+        fixture_z,
+    )
     task.add(scene)
 
     allow = stages.ModifyPlanningScene("allow peg/finger contact")
     allow.allowCollisions(PEG, CONTACT_LINKS, True)
+    # The perceived cylinder rests on the table, so sub-millimetre depth noise
+    # must not turn that intended support contact into an invalid start state.
+    allow.allowCollisions(PEG, ["work_table"], True)
     task.add(allow)
     task.add(move_hand_to("open gripper", joints, "open"))
 
     # Grasp 30 mm above the peg center so the Panda hand housing clears the
     # peg top while the finger pads still overlap the part.
-    pregrasp_link8_z = 0.812 + TCP_OFFSET + GRASP_Z_OFFSET + 0.14
+    pregrasp_link8_z = peg_z + TCP_OFFSET + GRASP_Z_OFFSET + 0.14
     task.add(
         move_arm_to(
             "move to pre-grasp",
@@ -206,7 +229,7 @@ def build_grasp_task(node, peg_x, peg_y):
     return task, (pipeline, cartesian, joints)
 
 
-def build_transfer_task(node, task_name):
+def build_transfer_task(node, task_name, fixture_x, fixture_y, fixture_z):
     pipeline = core.PipelinePlanner(node, "ompl", "RRTConnectkConfigDefault")
     cartesian = core.CartesianPath()
     cartesian.max_velocity_scaling_factor = 0.08
@@ -232,9 +255,9 @@ def build_transfer_task(node, task_name):
         task.add(move_arm_to("transfer to wide place target", pipeline, target))
     else:
         preinsert = pose_stamped(
-            FIXTURE_X,
-            FIXTURE_Y,
-            0.98 + TCP_OFFSET + GRASP_Z_OFFSET,
+            fixture_x,
+            fixture_y,
+            fixture_z + 0.18 + TCP_OFFSET + GRASP_Z_OFFSET,
             top_down=True,
         )
         task.add(move_arm_to("transfer to pre-insert", pipeline, preinsert))
@@ -308,6 +331,9 @@ def reset_gazebo_peg(x, y):
         ],
         check=True,
     )
+    # Let the teleported model and its camera/depth observations settle before
+    # Phase 2 clears the pose filter and starts a new acquisition window.
+    time.sleep(0.50)
 
 
 def reset_gripper():
@@ -402,6 +428,94 @@ def force_monitor(action):
         }
 
 
+def perception_client(action, timeout=10.0, require_ready=False):
+    """Call the perception control service through its small ROS CLI client."""
+    command = [
+        "ros2",
+        "run",
+        "object_perception",
+        "perception_snapshot_client",
+        action,
+        "--timeout",
+        str(timeout),
+    ]
+    if require_ready:
+        command.append("--require-ready")
+    result = subprocess.run(
+        command,
+        check=True,
+        capture_output=True,
+        text=True,
+        timeout=timeout + 5.0,
+    )
+    marker = "PHASE2_PERCEPTION="
+    line = next(
+        output_line
+        for output_line in reversed(result.stdout.splitlines())
+        if marker in output_line
+    )
+    return json.loads(line.split(marker, 1)[1])
+
+
+def acquire_perception_snapshot(timeout):
+    """Clear old samples, wait for valid observations, then freeze them."""
+    perception_client("reset", timeout=min(timeout, 5.0))
+    snapshot = perception_client("snapshot", timeout=timeout, require_ready=True)
+    frozen = perception_client("freeze", timeout=min(timeout, 5.0))
+    if not frozen.get("ready") or not frozen.get("frozen"):
+        raise RuntimeError("perception snapshot could not be frozen")
+    return frozen
+
+
+def selected_planning_poses(args, snapshot):
+    if args.pose_source == "configured":
+        return {
+            "source": "configured",
+            "peg": [args.peg_x, args.peg_y, 0.812],
+            "fixture": [FIXTURE_X, FIXTURE_Y, FIXTURE_BASE_Z],
+        }
+    if snapshot is None or not snapshot.get("ready", False):
+        raise RuntimeError("valid perception is required for Phase 2 planning")
+    objects = snapshot["objects"]
+    return {
+        "source": "perception_snapshot",
+        "peg": list(objects["peg"]["position"]),
+        "fixture": list(objects["fixture"]["position"]),
+    }
+
+
+def perception_evaluation(snapshot, args):
+    """Compute errors for logging only; these values never reach planning."""
+    if snapshot is None:
+        return None
+    truth = {
+        "peg": [args.peg_x, args.peg_y, 0.812],
+        "fixture": [FIXTURE_X, FIXTURE_Y, FIXTURE_BASE_Z],
+    }
+    evaluated = {
+        "ready": snapshot.get("ready", False),
+        "frozen": snapshot.get("frozen", False),
+        "world_frame": snapshot.get("world_frame"),
+        "camera_frame": snapshot.get("camera_frame"),
+        "objects": {},
+    }
+    for object_id, expected in truth.items():
+        measurement = snapshot["objects"].get(object_id)
+        if measurement is None:
+            evaluated["objects"][object_id] = None
+            continue
+        position = measurement["position"]
+        errors = [position[index] - expected[index] for index in range(3)]
+        evaluated["objects"][object_id] = {
+            **measurement,
+            "ground_truth_position": expected,
+            "translation_error_xyz_m": errors,
+            "translation_error_m": math.sqrt(sum(value * value for value in errors)),
+            "xy_error_m": math.hypot(errors[0], errors[1]),
+        }
+    return evaluated
+
+
 def run_segment(task, max_solutions, execute):
     started = time.monotonic()
     planned = bool(task.plan(max_solutions))
@@ -492,15 +606,23 @@ def write_log(
     physical_states,
     physical_outcome,
     force_metrics,
+    planning_poses,
+    perception,
+    runner_error,
 ):
     args.log_dir.mkdir(parents=True, exist_ok=True)
     stamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%S.%fZ")
     path = args.log_dir / f"{args.task}_{stamp}.json"
+    perception_mode = args.pose_source == "perception"
     payload = {
-        "schema_version": 1,
-        "phase": 1,
+        "schema_version": 2,
+        "phase": 2 if perception_mode else 1,
         "task": args.task,
-        "mode": "ground_truth_geometric_baseline",
+        "mode": (
+            "vision_pose_geometric_execution"
+            if perception_mode
+            else "ground_truth_geometric_baseline"
+        ),
         "simulation_only": True,
         "deployable_controller": False,
         "git_commit": git_commit(),
@@ -509,6 +631,9 @@ def write_log(
         "success": success,
         "task_success": task_success,
         "plan_only": args.plan_only,
+        "runner_error": runner_error,
+        "planning_input": planning_poses,
+        "perception_evaluation_only": perception,
         "ground_truth": {
             "peg_pose": {"x": args.peg_x, "y": args.peg_y, "z": 0.812},
             "fixture_pose": {"x": FIXTURE_X, "y": FIXTURE_Y, "z": FIXTURE_BASE_Z},
@@ -527,7 +652,7 @@ def write_log(
         "contact_force": force_metrics,
     }
     path.write_text(json.dumps(payload, indent=2) + "\n", encoding="utf-8")
-    print(f"PHASE1_LOG={path}")
+    print(f"PHASE{2 if perception_mode else 1}_LOG={path}")
 
 
 def main():
@@ -540,6 +665,10 @@ def main():
     physical_outcome = None
     force_metrics = None
     force_reset_succeeded = False
+    perception_snapshot = None
+    perception_metrics = None
+    planning_poses = None
+    runner_error = None
 
     rclcpp.init()
     options = rclcpp.NodeOptions()
@@ -553,10 +682,30 @@ def main():
         reset_gazebo_peg(args.peg_x, args.peg_y)
         time.sleep(0.25)
         physical_states["after_reset"] = gazebo_peg_pose()
+        if args.pose_source == "perception":
+            perception_snapshot = acquire_perception_snapshot(
+                args.perception_timeout
+            )
+        planning_poses = selected_planning_poses(args, perception_snapshot)
+        perception_metrics = perception_evaluation(perception_snapshot, args)
+        peg_x, peg_y, peg_z = planning_poses["peg"]
+        fixture_x, fixture_y, fixture_z = planning_poses["fixture"]
+        print(
+            "PLANNING_POSES="
+            + json.dumps(planning_poses, separators=(",", ":"))
+        )
         reset_metrics = force_monitor("reset")
         force_reset_succeeded = "error" not in reset_metrics
 
-        grasp, planners = build_grasp_task(node, args.peg_x, args.peg_y)
+        grasp, planners = build_grasp_task(
+            node,
+            peg_x,
+            peg_y,
+            peg_z,
+            fixture_x,
+            fixture_y,
+            fixture_z,
+        )
         keep_alive.extend(planners)
         ok, result = run_segment(grasp, args.max_solutions, not args.plan_only)
         segments.append(result)
@@ -566,7 +715,13 @@ def main():
             gz_topic("/phase1/peg/attach")
             time.sleep(0.25)
             physical_states["after_attach"] = gazebo_peg_pose()
-            transfer, planners = build_transfer_task(node, args.task)
+            transfer, planners = build_transfer_task(
+                node,
+                args.task,
+                fixture_x,
+                fixture_y,
+                fixture_z,
+            )
             keep_alive.extend(planners)
             ok, result = run_segment(transfer, args.max_solutions, True)
             segments.append(result)
@@ -587,6 +742,9 @@ def main():
                     args.task, physical_states["final"]
                 )
                 task_success = ok and physical_outcome["success"]
+    except Exception as error:  # Ensure a failed gate still emits evidence.
+        runner_error = f"{type(error).__name__}: {error}"
+        print(f"RUNNER_ERROR={runner_error}")
     finally:
         force_metrics = force_monitor("snapshot")
         force_metrics["reset_succeeded"] = force_reset_succeeded
@@ -613,6 +771,9 @@ def main():
             physical_states,
             physical_outcome,
             force_metrics,
+            planning_poses,
+            perception_metrics,
+            runner_error,
         )
         del keep_alive
         rclcpp.shutdown()

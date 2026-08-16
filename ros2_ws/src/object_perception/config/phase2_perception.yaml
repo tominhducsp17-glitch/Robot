@@ -1,0 +1,19 @@
+aruco_pose_estimator:
+  ros__parameters:
+    world_frame: world
+    camera_frame: phase1_camera_optical
+    image_topic: /phase1/camera/image
+    depth_topic: /phase1/camera/depth_image
+    camera_info_topic: /phase1/camera/camera_info
+    stale_after_sec: 0.5
+    # Rendering under WSL can deliver RGB and depth several hundred ms apart.
+    # Objects are stationary while a Phase 2 snapshot is acquired.
+    max_depth_age_sec: 2.0
+    outlier_translation_m: 0.05
+    filter_alpha: 0.35
+    minimum_confidence: 0.50
+    minimum_samples: 10
+    scene_publish_period_sec: 0.5
+    # Gazebo's emissive white labels need a stronger local threshold than the
+    # OpenCV default to preserve the black border of the larger fixture tag.
+    adaptive_threshold_constant: 25.0

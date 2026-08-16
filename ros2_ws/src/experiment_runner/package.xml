@@ -15,6 +15,7 @@
   <exec_depend>moveit_task_constructor_core</exec_depend>
   <exec_depend>moveit_task_constructor_msgs</exec_depend>
   <exec_depend>moveit_msgs</exec_depend>
+  <exec_depend>object_perception</exec_depend>
   <exec_depend>rclpy</exec_depend>
   <exec_depend>ros_gz_interfaces</exec_depend>
   <exec_depend>shape_msgs</exec_depend>

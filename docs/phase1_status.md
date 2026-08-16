@@ -39,7 +39,8 @@ Generated run logs are intentionally ignored by Git; rerun
 The full Phase 1 exit criterion is **passed** in the verified five-pose nominal
 run: trajectory-and-physical success was 5/5 (100%), the contact monitor was
 available in every episode, and no episode exceeded the 50 N evaluator limit.
-Phase 2 has not started.
+Phase 2 subsequently passed its separate vision-driven gate; see
+`docs/phase2_status.md`.
 
 ## Known runtime issue
 
