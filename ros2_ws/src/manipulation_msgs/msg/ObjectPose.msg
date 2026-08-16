@@ -1,0 +1,10 @@
+std_msgs/Header header
+string object_id
+uint32 marker_id
+geometry_msgs/PoseWithCovariance pose
+float64 confidence
+float64 measurement_age_sec
+bool stale
+bool outlier
+uint32 accepted_samples
+uint32 rejected_outliers

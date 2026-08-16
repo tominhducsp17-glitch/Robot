@@ -5,6 +5,7 @@ import json
 import math
 
 import rclpy
+from rclpy.executors import ExternalShutdownException
 from rclpy.node import Node
 from ros_gz_interfaces.msg import Contacts
 from std_srvs.srv import Trigger
@@ -102,7 +103,7 @@ def main():
     node = ContactForceMonitor()
     try:
         rclpy.spin(node)
-    except KeyboardInterrupt:
+    except (KeyboardInterrupt, ExternalShutdownException):
         pass
     finally:
         node.destroy_node()

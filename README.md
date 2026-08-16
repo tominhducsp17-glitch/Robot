@@ -7,11 +7,11 @@ bounded failure recovery.
 
 ## Current status
 
-**Phases 0 and 1 are complete; Phase 2 has not started.** The repository contains
-a simulation-only, ground-truth geometric baseline for Task A pick-and-place
-and Task B large-clearance insertion, including Gazebo contact-force monitoring
-and a reproducible nominal exit gate. Perception, visual servoing, compliant
-control, and recovery are not implemented yet.
+**Phases 0, 1, and 2 are complete.** The repository contains a simulation-only
+geometric baseline plus calibrated RGB-D ArUco perception for the peg and
+fixture. Task B now plans from a timestamped, filtered, frozen vision snapshot;
+Gazebo ground truth is retained only by the evaluator. Visual servoing,
+compliant control, and recovery are not implemented yet.
 
 See:
 
@@ -19,6 +19,7 @@ See:
 - `docs/environment_audit.md` for machine and gate evidence.
 - `docs/version_matrix.md` for the supported dependency matrix.
 - `docs/phase1_status.md` for Phase 1 evidence and remaining gate.
+- `docs/phase2_status.md` for the perception interfaces, thresholds, and gate.
 - `THIRD_PARTY.md` for the boundary between upstream software and future
   project-owned work.
 
@@ -135,9 +136,40 @@ by Git.
 - The Gazebo contact monitor is evaluator instrumentation. It records peak/RMS
   force and rejects violations; it is not a compliant or safety controller.
 - No learned-perception/CUDA dependency is required for the MVP.
-- Phase 2 may now replace configured peg/fixture poses with timestamped camera
-  estimates while Gazebo ground truth remains evaluator-only.
+- Phase 2 replaces configured peg/fixture planning inputs with timestamped
+  camera estimates while Gazebo ground truth remains evaluator-only.
 - Simulation-only results must always be described as simulation-only.
+
+## Phase 2 quick start
+
+Build the perception interfaces, estimator, bringup, and runner:
+
+```bash
+source /opt/ros/jazzy/setup.bash
+colcon build --base-paths ros2_ws/src --symlink-install \
+  --packages-select manipulation_msgs object_perception \
+  manipulation_description manipulation_moveit_config \
+  manipulation_bringup experiment_runner
+source install/setup.bash
+```
+
+Keep the simulator and estimator running in terminal 1:
+
+```bash
+ros2 launch manipulation_bringup phase2.launch.py
+```
+
+Run one vision-guided Task B episode in terminal 2, or run the five-pose gate:
+
+```bash
+ros2 launch experiment_runner phase2_task.launch.py
+./scripts/phase2/run_vision_benchmark.sh
+```
+
+The estimator publishes `/perception/object_poses` and collision objects, and
+exposes `/perception/reset`, `/perception/snapshot`, and `/perception/freeze`.
+The runner rejects missing, stale, low-confidence, or insufficiently sampled
+observations before motion.
 
 ## License
 

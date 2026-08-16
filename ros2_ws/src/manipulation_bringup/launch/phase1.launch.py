@@ -106,10 +106,10 @@ def generate_launch_description():
         arguments=[
             "/clock@rosgraph_msgs/msg/Clock[gz.msgs.Clock",
             "/phase1/peg/contacts@ros_gz_interfaces/msg/Contacts[gz.msgs.Contacts",
-            "/phase1/camera/image@sensor_msgs/msg/Image@gz.msgs.Image",
-            "/phase1/camera/camera_info@sensor_msgs/msg/CameraInfo@gz.msgs.CameraInfo",
-            "/phase1/camera/depth_image@sensor_msgs/msg/Image@gz.msgs.Image",
-            "/phase1/camera/points@sensor_msgs/msg/PointCloud2@gz.msgs.PointCloudPacked",
+            "/phase1/camera/image@sensor_msgs/msg/Image[gz.msgs.Image",
+            "/phase1/camera/camera_info@sensor_msgs/msg/CameraInfo[gz.msgs.CameraInfo",
+            "/phase1/camera/depth_image@sensor_msgs/msg/Image[gz.msgs.Image",
+            "/phase1/camera/points@sensor_msgs/msg/PointCloud2[gz.msgs.PointCloudPacked",
         ],
     )
 

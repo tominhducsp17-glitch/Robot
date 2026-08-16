@@ -75,6 +75,25 @@
           <geometry><cylinder><radius>0.018</radius><length>0.12</length></cylinder></geometry>
           <material><ambient>0.1 0.35 0.8 1</ambient><diffuse>0.1 0.35 0.8 1</diffuse></material>
         </visual>
+        <!-- ArUco DICT_4X4_50 marker 0, mounted on a white top label. -->
+        <visual name="peg_tag_quiet_zone">
+          <pose>0 0 0.0605 0 0 0</pose>
+          <geometry><box><size>0.042 0.042 0.001</size></box></geometry>
+          <material><ambient>1 1 1 1</ambient><diffuse>1 1 1 1</diffuse><emissive>1 1 1 1</emissive></material>
+        </visual>
+        <visual name="peg_tag_black">
+          <pose>0 0 0.06115 0 0 0</pose>
+          <geometry><box><size>0.034 0.034 0.0002</size></box></geometry>
+          <material><ambient>0 0 0 1</ambient><diffuse>0 0 0 1</diffuse></material>
+        </visual>
+        <visual name="peg_tag_0_w_11"><pose>-0.0085 0.0085 0.06135 0 0 0</pose><geometry><box><size>0.005667 0.005667 0.0002</size></box></geometry><material><ambient>1 1 1 1</ambient><diffuse>1 1 1 1</diffuse><emissive>1 1 1 1</emissive></material></visual>
+        <visual name="peg_tag_0_w_13"><pose>0.002833 0.0085 0.06135 0 0 0</pose><geometry><box><size>0.005667 0.005667 0.0002</size></box></geometry><material><ambient>1 1 1 1</ambient><diffuse>1 1 1 1</diffuse><emissive>1 1 1 1</emissive></material></visual>
+        <visual name="peg_tag_0_w_14"><pose>0.0085 0.0085 0.06135 0 0 0</pose><geometry><box><size>0.005667 0.005667 0.0002</size></box></geometry><material><ambient>1 1 1 1</ambient><diffuse>1 1 1 1</diffuse><emissive>1 1 1 1</emissive></material></visual>
+        <visual name="peg_tag_0_w_22"><pose>-0.002833 0.002833 0.06135 0 0 0</pose><geometry><box><size>0.005667 0.005667 0.0002</size></box></geometry><material><ambient>1 1 1 1</ambient><diffuse>1 1 1 1</diffuse><emissive>1 1 1 1</emissive></material></visual>
+        <visual name="peg_tag_0_w_24"><pose>0.0085 0.002833 0.06135 0 0 0</pose><geometry><box><size>0.005667 0.005667 0.0002</size></box></geometry><material><ambient>1 1 1 1</ambient><diffuse>1 1 1 1</diffuse><emissive>1 1 1 1</emissive></material></visual>
+        <visual name="peg_tag_0_w_33"><pose>0.002833 -0.002833 0.06135 0 0 0</pose><geometry><box><size>0.005667 0.005667 0.0002</size></box></geometry><material><ambient>1 1 1 1</ambient><diffuse>1 1 1 1</diffuse><emissive>1 1 1 1</emissive></material></visual>
+        <visual name="peg_tag_0_w_34"><pose>0.0085 -0.002833 0.06135 0 0 0</pose><geometry><box><size>0.005667 0.005667 0.0002</size></box></geometry><material><ambient>1 1 1 1</ambient><diffuse>1 1 1 1</diffuse><emissive>1 1 1 1</emissive></material></visual>
+        <visual name="peg_tag_0_w_43"><pose>0.002833 -0.0085 0.06135 0 0 0</pose><geometry><box><size>0.005667 0.005667 0.0002</size></box></geometry><material><ambient>1 1 1 1</ambient><diffuse>1 1 1 1</diffuse><emissive>1 1 1 1</emissive></material></visual>
       </link>
     </model>
 
@@ -91,6 +110,17 @@
         <visual name="wall_x_neg_visual"><pose>-0.035 0 0.05 0 0 0</pose><geometry><box><size>0.02 0.09 0.10</size></box></geometry><material><ambient>0.75 0.25 0.1 1</ambient><diffuse>0.75 0.25 0.1 1</diffuse></material></visual>
         <visual name="wall_y_pos_visual"><pose>0 0.035 0.05 0 0 0</pose><geometry><box><size>0.05 0.02 0.10</size></box></geometry><material><ambient>0.75 0.25 0.1 1</ambient><diffuse>0.75 0.25 0.1 1</diffuse></material></visual>
         <visual name="wall_y_neg_visual"><pose>0 -0.035 0.05 0 0 0</pose><geometry><box><size>0.05 0.02 0.10</size></box></geometry><material><ambient>0.75 0.25 0.1 1</ambient><diffuse>0.75 0.25 0.1 1</diffuse></material></visual>
+        <!-- ArUco DICT_4X4_50 marker 1, offset 150 mm behind fixture center. -->
+        <visual name="fixture_tag_quiet_zone"><pose>0 -0.15 -0.0485 0 0 0</pose><geometry><box><size>0.10 0.10 0.001</size></box></geometry><material><ambient>1 1 1 1</ambient><diffuse>1 1 1 1</diffuse><emissive>1 1 1 1</emissive></material></visual>
+        <visual name="fixture_tag_black"><pose>0 -0.15 -0.04785 0 0 0</pose><geometry><box><size>0.08 0.08 0.0002</size></box></geometry><material><ambient>0 0 0 1</ambient><diffuse>0 0 0 1</diffuse></material></visual>
+        <visual name="fixture_tag_1_w_21"><pose>0.006667 -0.13 -0.04765 0 0 0</pose><geometry><box><size>0.013333 0.013333 0.0002</size></box></geometry><material><ambient>1 1 1 1</ambient><diffuse>1 1 1 1</diffuse><emissive>1 1 1 1</emissive></material></visual>
+        <visual name="fixture_tag_1_w_22"><pose>0.006667 -0.143333 -0.04765 0 0 0</pose><geometry><box><size>0.013333 0.013333 0.0002</size></box></geometry><material><ambient>1 1 1 1</ambient><diffuse>1 1 1 1</diffuse><emissive>1 1 1 1</emissive></material></visual>
+        <visual name="fixture_tag_1_w_23"><pose>0.006667 -0.156667 -0.04765 0 0 0</pose><geometry><box><size>0.013333 0.013333 0.0002</size></box></geometry><material><ambient>1 1 1 1</ambient><diffuse>1 1 1 1</diffuse><emissive>1 1 1 1</emissive></material></visual>
+        <visual name="fixture_tag_1_w_24"><pose>0.006667 -0.17 -0.04765 0 0 0</pose><geometry><box><size>0.013333 0.013333 0.0002</size></box></geometry><material><ambient>1 1 1 1</ambient><diffuse>1 1 1 1</diffuse><emissive>1 1 1 1</emissive></material></visual>
+        <visual name="fixture_tag_1_w_31"><pose>-0.006667 -0.13 -0.04765 0 0 0</pose><geometry><box><size>0.013333 0.013333 0.0002</size></box></geometry><material><ambient>1 1 1 1</ambient><diffuse>1 1 1 1</diffuse><emissive>1 1 1 1</emissive></material></visual>
+        <visual name="fixture_tag_1_w_34"><pose>-0.006667 -0.17 -0.04765 0 0 0</pose><geometry><box><size>0.013333 0.013333 0.0002</size></box></geometry><material><ambient>1 1 1 1</ambient><diffuse>1 1 1 1</diffuse><emissive>1 1 1 1</emissive></material></visual>
+        <visual name="fixture_tag_1_w_41"><pose>-0.02 -0.13 -0.04765 0 0 0</pose><geometry><box><size>0.013333 0.013333 0.0002</size></box></geometry><material><ambient>1 1 1 1</ambient><diffuse>1 1 1 1</diffuse><emissive>1 1 1 1</emissive></material></visual>
+        <visual name="fixture_tag_1_w_43"><pose>-0.02 -0.156667 -0.04765 0 0 0</pose><geometry><box><size>0.013333 0.013333 0.0002</size></box></geometry><material><ambient>1 1 1 1</ambient><diffuse>1 1 1 1</diffuse><emissive>1 1 1 1</emissive></material></visual>
       </link>
     </model>
 
@@ -104,7 +134,7 @@
           <topic>/phase1/camera</topic>
           <camera>
             <horizontal_fov>1.047</horizontal_fov>
-            <image><width>640</width><height>480</height><format>R8G8B8</format></image>
+            <image><width>800</width><height>600</height><format>R8G8B8</format></image>
             <clip><near>0.05</near><far>5.0</far></clip>
           </camera>
         </sensor>

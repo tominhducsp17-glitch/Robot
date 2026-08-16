@@ -15,6 +15,7 @@ class RepositoryLayoutTest(unittest.TestCase):
             ".gitignore",
             "docs/environment_audit.md",
             "docs/phase1_status.md",
+            "docs/phase2_status.md",
             "docs/version_matrix.md",
         ):
             with self.subTest(path=relative_path):

@@ -35,3 +35,27 @@ force of 12.333 N. The generated summary reported `phase1_exit_gate: true`.
 This is evaluator-side simulation ground truth, not a deployable force-feedback
 controller. Compliant control, active force limiting, and retreat behavior
 remain later-phase work.
+
+## Phase 2 vision protocol
+
+- Use the same five valid peg positions and Task B geometry as Phase 1.
+- Start `manipulation_bringup phase2.launch.py`, which adds an optical camera TF
+  and the ArUco/RGB-D estimator to the Phase 1 simulator.
+- After each physical reset, clear the pose filters, require at least 10 valid
+  samples for both objects, then freeze one immutable snapshot.
+- Reject observations with confidence below 0.5, age above 0.5 s, a current
+  outlier flag, or missing peg/fixture data.
+- Feed only the frozen estimated positions into the MTC planning scene, grasp,
+  and pre-insert goals. Configured simulator poses may be used only for reset
+  and post-run evaluation.
+- Require 3D translation error <=15 mm for both objects, measurement age <=0.5
+  s, five of five successful Task B episodes, an available force monitor, and
+  zero 50 N force-limit violations.
+
+Run `scripts/phase2/run_vision_benchmark.sh` while Phase 2 bringup remains
+active. Episode logs are written under `experiments/raw/phase2/`, and the gate
+summary is written under `experiments/summaries/phase2/`.
+
+The verified run on 2026-08-16 achieved 5/5 successes. Maximum 3D pose error
+was 2.266 mm, maximum measurement age was 232 ms, peak contact force was 12.495
+N, and the generated summary reported `phase2_exit_gate: true`.

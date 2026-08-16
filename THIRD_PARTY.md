@@ -14,12 +14,14 @@ respective authors.
 | ros_gz | `ros-jazzy-ros-gz` | ROS/Gazebo integration |
 | ros2_control / ros2_controllers | ROS Controls Jazzy binaries | Controller framework |
 | gz_ros2_control demos | `ros-jazzy-gz-ros2-control-demos` | Upstream Phase 0 integration smoke test |
+| OpenCV ArUco | Ubuntu `python3-opencv` / OpenCV | Phase 2 fiducial detection and PnP pose estimation |
 
 Running, documenting, or wrapping an upstream demo is not claimed as an
 original project contribution. Project-owned Phase 1 work consists of the
 simulation world, wrapper description/configuration, staged task orchestration,
-physical-result validation, contact-force aggregation/gating, and logging. It
-does not claim ownership of Panda, MoveIt, Gazebo, or ROS assets and software.
+physical-result validation, contact-force aggregation/gating, logging, and the
+Phase 2 ROS integration around OpenCV ArUco. It does not claim ownership of
+Panda, MoveIt, Gazebo, OpenCV, or ROS assets and software.
 
 Exact installed Debian versions and source links are recorded in
 `docs/version_matrix.md`.

@@ -46,7 +46,7 @@ class Phase1ContractTest(unittest.TestCase):
             / "ros2_ws/src/experiment_runner/experiment_runner/phase1_task.py"
         ).read_text(encoding="utf-8")
         for required in (
-            '"mode": "ground_truth_geometric_baseline"',
+            '"ground_truth_geometric_baseline"',
             '"simulation_only": True',
             '"deployable_controller": False',
             '"force_monitor_available": force_metrics["available"]',
